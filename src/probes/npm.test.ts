@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { probe } from './npm.js';
+import { probe } from './npm';
 
 describe('npm probe', () => {
   test('finds prettier', async () => {

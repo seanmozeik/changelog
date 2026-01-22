@@ -1,4 +1,4 @@
-import { type ProbeResult, parseGitHubUrl } from './types.js';
+import { type ProbeResult, parseGitHubUrl } from './types';
 
 interface PyPIResponse {
   info: {

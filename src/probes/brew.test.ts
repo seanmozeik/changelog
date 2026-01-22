@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import { probe } from './brew.js';
-import { parseGitHubUrl } from './types.js';
+import { probe } from './brew';
+import { parseGitHubUrl } from './types';
 
 describe('parseGitHubUrl', () => {
   test('parses https URL', () => {

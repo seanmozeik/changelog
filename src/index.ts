@@ -3,10 +3,15 @@
 import { $ } from 'bun';
 import pc from 'picocolors';
 import pkg from '../package.json';
-import { type ChangelogResult, getChangelogContent } from './lib/github.js';
-import { getCommandVersion } from './lib/version.js';
-import { probe } from './probes/index.js';
-import { showBanner } from './ui/banner.js';
+import {
+  type ChangelogResult,
+  getChangelogContent,
+  getGitHubToken,
+  getRecentReleases
+} from './lib/github';
+import { getCommandVersion } from './lib/version';
+import { probe } from './probes/index';
+import { showBanner } from './ui/banner';
 
 // Parse CLI arguments
 const args = Bun.argv.slice(2);
@@ -18,9 +23,12 @@ interface Flags {
   open: boolean;
   help: boolean;
   version: boolean;
+  count: number;
 }
 
-const FLAG_MAP: Record<string, keyof Flags> = {
+type BooleanFlag = Exclude<keyof Flags, 'count'>;
+
+const FLAG_MAP: Record<string, BooleanFlag> = {
   '--help': 'help',
   '--json': 'json',
   '--local': 'local',
@@ -37,6 +45,7 @@ const FLAG_MAP: Record<string, keyof Flags> = {
 
 function parseArgs(args: string[]): { command: string | null; flags: Flags } {
   const flags: Flags = {
+    count: 1,
     help: false,
     json: false,
     local: false,
@@ -46,14 +55,35 @@ function parseArgs(args: string[]): { command: string | null; flags: Flags } {
   };
 
   let command: string | null = null;
+  let i = 0;
 
-  for (const arg of args) {
+  while (i < args.length) {
+    const arg = args[i];
+    if (!arg) {
+      i++;
+      continue;
+    }
+
+    // Handle -n <count>
+    if (arg === '-n' || arg === '--count') {
+      const next = args[i + 1];
+      if (next) {
+        const num = parseInt(next, 10);
+        if (!Number.isNaN(num) && num > 0) {
+          flags.count = num;
+        }
+        i += 2;
+        continue;
+      }
+    }
+
     const flagKey = FLAG_MAP[arg];
     if (flagKey) {
       flags[flagKey] = true;
     } else if (!arg.startsWith('-') && !command) {
       command = arg;
     }
+    i++;
   }
 
   return { command, flags };
@@ -71,9 +101,11 @@ function showHelp(): void {
   console.log(pc.bold('Examples:'));
   console.log(`  ${pc.dim('changelog bat')}          Show latest bat release notes`);
   console.log(`  ${pc.dim('changelog rg --local')}   Show release notes for installed version`);
+  console.log(`  ${pc.dim('changelog fd -n 5')}      Show last 5 releases`);
   console.log(`  ${pc.dim('changelog fd --open')}    Open release page in browser`);
   console.log();
   console.log(pc.bold('Flags:'));
+  console.log(`  ${pc.cyan('-n, --count')}    Show last N releases`);
   console.log(`  ${pc.cyan('--local, -l')}    Show installed version's release notes`);
   console.log(`  ${pc.cyan('--raw, -r')}      Output raw markdown (skip bat)`);
   console.log(`  ${pc.cyan('--json, -j')}     Output release JSON`);
@@ -198,6 +230,69 @@ async function main(): Promise<void> {
       console.error(pc.dim(`Package manager: ${probeResult.manager}`));
     }
     process.exit(1);
+  }
+
+  // Handle multiple releases with -n flag
+  if (flags.count > 1) {
+    const token = await getGitHubToken();
+    const releases = await getRecentReleases(probeResult.githubRepo, flags.count, token);
+
+    if (releases.length === 0) {
+      console.error(
+        pc.red(
+          `Error: No releases found for ${probeResult.githubRepo.owner}/${probeResult.githubRepo.repo}`
+        )
+      );
+      process.exit(1);
+    }
+
+    // Handle --open for multiple releases (open releases page)
+    if (flags.open) {
+      await $`open https://github.com/${probeResult.githubRepo.owner}/${probeResult.githubRepo.repo}/releases`;
+      process.exit(0);
+    }
+
+    // Handle --json for multiple releases
+    if (flags.json) {
+      console.log(
+        JSON.stringify(
+          {
+            command,
+            count: releases.length,
+            manager: probeResult.manager,
+            package: probeResult.packageName,
+            releases: releases.map((r) => ({
+              content: r.body,
+              url: r.html_url,
+              version: r.tag_name
+            })),
+            repo: `${probeResult.githubRepo.owner}/${probeResult.githubRepo.repo}`
+          },
+          null,
+          2
+        )
+      );
+      process.exit(0);
+    }
+
+    // Build combined content
+    const repoName = formatRepoName(probeResult.githubRepo.repo);
+    const combinedContent = releases
+      .map((r) => {
+        const cleaned = stripDownloadSections(
+          stripMarkdownTables(stripMarkdownLinks(r.body || ''))
+        );
+        return `# ${repoName} ${r.tag_name}\n\n${cleaned}`;
+      })
+      .join('\n\n---\n\n');
+
+    if (flags.raw) {
+      console.log(combinedContent);
+      process.exit(0);
+    }
+
+    await outputToBat(combinedContent);
+    process.exit(0);
   }
 
   // Get version for --local flag

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { getCommandVersion, parseVersion } from './version.js';
+import { getCommandVersion, parseVersion } from './version';
 
 describe('parseVersion', () => {
   test("parses 'bat 0.24.0' format", () => {

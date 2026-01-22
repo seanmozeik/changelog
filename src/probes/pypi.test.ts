@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { probe } from './pypi.js';
+import { probe } from './pypi';
 
 describe('pypi probe', () => {
   test('finds httpie', async () => {

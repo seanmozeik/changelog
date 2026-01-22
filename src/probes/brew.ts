@@ -1,5 +1,5 @@
 import { $ } from 'bun';
-import { type ProbeResult, parseGitHubUrl } from './types.js';
+import { type ProbeResult, parseGitHubUrl } from './types';
 
 interface BrewFormula {
   name: string;

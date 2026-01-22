@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { probe } from './cargo.js';
+import { probe } from './cargo';
 
 describe('cargo probe', () => {
   test('finds ripgrep', async () => {

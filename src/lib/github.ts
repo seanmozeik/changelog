@@ -1,5 +1,5 @@
 import { $ } from 'bun';
-import type { GitHubRepo } from '../probes/types.js';
+import type { GitHubRepo } from '../probes/types';
 
 export interface GitHubRelease {
   tag_name: string;
@@ -70,6 +70,32 @@ export async function getLatestRelease(
   }
 
   return response.json() as Promise<GitHubRelease>;
+}
+
+/**
+ * Get the last N releases for a repo
+ */
+export async function getRecentReleases(
+  repo: GitHubRepo,
+  count: number,
+  token: string | null
+): Promise<GitHubRelease[]> {
+  const response = await githubFetch(
+    `/repos/${repo.owner}/${repo.repo}/releases?per_page=${count}`,
+    token
+  );
+
+  if (response.status === 404) {
+    return [];
+  }
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`GitHub API error ${response.status}: ${error}`);
+  }
+
+  const releases = (await response.json()) as GitHubRelease[];
+  return releases.filter((r) => !r.draft);
 }
 
 /**

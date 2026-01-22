@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { detectPackageManager, probe, whichCommand } from './index.js';
+import { detectPackageManager, probe, whichCommand } from './index';
 
 describe('detectPackageManager', () => {
   test('detects Homebrew from /opt/homebrew/', () => {
@@ -43,14 +43,15 @@ describe('detectPackageManager', () => {
 
 describe('whichCommand', () => {
   test('finds existing commands', async () => {
-    const path = await whichCommand('ls');
-    expect(path).toBeTruthy();
-    expect(path).toContain('/ls');
+    const result = await whichCommand('ls');
+    expect(result).toBeTruthy();
+    expect(result?.binPath).toContain('/ls');
+    expect(result?.resolvedPath).toBeTruthy();
   });
 
   test('returns null for non-existent commands', async () => {
-    const path = await whichCommand('definitely-not-a-real-command-xyz');
-    expect(path).toBeNull();
+    const result = await whichCommand('definitely-not-a-real-command-xyz');
+    expect(result).toBeNull();
   });
 });
 

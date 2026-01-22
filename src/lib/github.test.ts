@@ -5,7 +5,7 @@ import {
   getGitHubToken,
   getLatestRelease,
   getReleaseByTag
-} from './github.js';
+} from './github';
 
 describe('getGitHubToken', () => {
   test('returns token or null', async () => {

@@ -1,12 +1,33 @@
 import { $ } from 'bun';
-import { type ProbeResult, parseGitHubUrl } from './types.js';
+import { type ProbeResult, parseGitHubUrl } from './types';
 
 /**
- * Get npm package name from a global command
- * For global packages, the command name often matches the package name
+ * Extract package name from resolved path
+ * /path/to/node_modules/@biomejs/biome/bin/biome -> @biomejs/biome
  */
-async function getNpmPackageName(command: string): Promise<string | null> {
-  // Check if it's a valid npm package
+function extractPackageFromPath(resolvedPath: string): string | null {
+  const match = resolvedPath.match(/node_modules\/(@[^/]+\/[^/]+|[^/]+)/);
+  return match?.[1] ?? null;
+}
+
+/**
+ * Get npm package name from command and resolved path
+ */
+async function getNpmPackageName(command: string, resolvedPath?: string): Promise<string | null> {
+  // Try to extract package name from resolved path (works for bun, npm globals, etc.)
+  if (resolvedPath) {
+    const pkgName = extractPackageFromPath(resolvedPath);
+    if (pkgName) {
+      try {
+        await $`npm view ${pkgName} name`.quiet();
+        return pkgName;
+      } catch {
+        // Package might not be on npm, continue
+      }
+    }
+  }
+
+  // Check if command name is a valid npm package
   try {
     await $`npm view ${command} name`.quiet();
     return command;
@@ -18,8 +39,8 @@ async function getNpmPackageName(command: string): Promise<string | null> {
 /**
  * Probe npm registry for package info and GitHub repo
  */
-export async function probe(command: string): Promise<ProbeResult> {
-  const packageName = await getNpmPackageName(command);
+export async function probe(command: string, resolvedPath?: string): Promise<ProbeResult> {
+  const packageName = await getNpmPackageName(command, resolvedPath);
 
   if (!packageName) {
     return {
