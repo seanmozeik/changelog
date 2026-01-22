@@ -12,20 +12,20 @@ class Changelog < Formula
   on_macos do
     if Hardware::CPU.arm?
       url "https://github.com/seanmozeik/changelog/releases/download/v#{version}/changelog-darwin-arm64.tar.gz"
-      sha256 "0000000000000000000000000000000000000000000000000000000000000000"
+      sha256 "a5d64e83899219602a108c1a1533ad349c90f962db9a9cac0f472cdf773547b1"
     else
       url "https://github.com/seanmozeik/changelog/releases/download/v#{version}/changelog-darwin-x64.tar.gz"
-      sha256 "0000000000000000000000000000000000000000000000000000000000000000"
+      sha256 "cdef7656243ffdc5f186c54cac593df08472ee0d2afd8eaf157e4f6ae4bc26cb"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
       url "https://github.com/seanmozeik/changelog/releases/download/v#{version}/changelog-linux-arm64.tar.gz"
-      sha256 "0000000000000000000000000000000000000000000000000000000000000000"
+      sha256 "4c6c941985fac1fb0b78287389e32e46b0bfc5524ceccc75ff7daaa4e40bd585"
     else
       url "https://github.com/seanmozeik/changelog/releases/download/v#{version}/changelog-linux-x64.tar.gz"
-      sha256 "0000000000000000000000000000000000000000000000000000000000000000"
+      sha256 "bcb3176c2f1e45fc1ff4ab375847e07454f0b2a5cc75f886c287fec1a5487004"
     end
   end
 

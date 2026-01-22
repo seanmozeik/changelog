@@ -32,6 +32,7 @@ changelog <command> [flags]
 ```bash
 changelog bat          # Show latest bat release notes
 changelog rg --local   # Show release notes for installed version
+changelog fd -n 5      # Show last 5 releases
 changelog fd --open    # Open release page in browser
 changelog prettier -r  # Output raw markdown
 ```
@@ -40,6 +41,7 @@ changelog prettier -r  # Output raw markdown
 
 | Flag | Short | Description |
 |------|-------|-------------|
+| `--count` | `-n` | Show last N releases |
 | `--local` | `-l` | Show release notes for installed version |
 | `--raw` | `-r` | Output raw markdown (skip bat) |
 | `--json` | `-j` | Output release data as JSON |
@@ -52,7 +54,7 @@ changelog prettier -r  # Output raw markdown
 | Manager | Detection | Source |
 |---------|-----------|--------|
 | Homebrew | `/opt/homebrew/`, `/usr/local/Cellar/` | `brew info --json=v2` |
-| npm | `/node_modules/.bin/` | `npm view` |
+| npm/bun | `/node_modules/.bin/`, `~/.bun/bin/` | `npm view` |
 | Cargo | `~/.cargo/bin/` | crates.io API |
 | pip/uv | `~/.local/bin/`, venv paths | PyPI API |
 
