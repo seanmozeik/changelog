@@ -93,15 +93,73 @@ function showVersion(): void {
 }
 
 async function outputToBat(content: string): Promise<void> {
-  const batProcess = Bun.spawn(['bat', '--language=markdown', '--style=plain', '--paging=always'], {
-    stderr: 'inherit',
-    stdin: 'pipe',
-    stdout: 'inherit'
-  });
+  const termWidth = process.stdout.columns || 80;
+  const batProcess = Bun.spawn(
+    [
+      'bat',
+      '--language=markdown',
+      '--style=plain',
+      '--paging=always',
+      `--pager=less -RF -x4`,
+      '--wrap=character',
+      `--terminal-width=${termWidth}`
+    ],
+    {
+      stderr: 'inherit',
+      stdin: 'pipe',
+      stdout: 'inherit'
+    }
+  );
 
   batProcess.stdin.write(content);
   batProcess.stdin.end();
   await batProcess.exited;
+}
+
+function formatRepoName(name: string): string {
+  // Capitalize first letter of each word, replace hyphens with spaces
+  return name
+    .split('-')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+function stripMarkdownLinks(content: string): string {
+  // [text](url) -> text
+  return content.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+}
+
+function stripMarkdownTables(content: string): string {
+  // Remove markdown tables (lines starting with |)
+  return content
+    .split('\n')
+    .filter((line) => !line.trim().startsWith('|'))
+    .join('\n');
+}
+
+function stripDownloadSections(content: string): string {
+  // Remove ## Download and ## Install sections entirely
+  const lines = content.split('\n');
+  const result: string[] = [];
+  let skipping = false;
+
+  for (const line of lines) {
+    const trimmed = line.trim().toLowerCase();
+    // Start skipping on Download/Install headers
+    if (/^##\s+(download|install)\b/.test(trimmed)) {
+      skipping = true;
+      continue;
+    }
+    // Stop skipping on next ## header
+    if (skipping && /^##\s+/.test(line.trim())) {
+      skipping = false;
+    }
+    if (!skipping) {
+      result.push(line);
+    }
+  }
+
+  return result.join('\n');
 }
 
 async function main(): Promise<void> {
@@ -186,14 +244,23 @@ async function main(): Promise<void> {
     process.exit(0);
   }
 
+  // Build header with repo name
+  const repoName = formatRepoName(probeResult.githubRepo.repo);
+  const version = changelogResult.version ?? 'latest';
+  const header = `# ${repoName} ${version}\n\n`;
+  const cleanedContent = stripDownloadSections(
+    stripMarkdownTables(stripMarkdownLinks(changelogResult.content))
+  );
+  const fullContent = header + cleanedContent;
+
   // Handle --raw
   if (flags.raw) {
-    console.log(changelogResult.content);
+    console.log(fullContent);
     process.exit(0);
   }
 
   // Default: pipe to bat
-  await outputToBat(changelogResult.content);
+  await outputToBat(fullContent);
 }
 
 main().catch((err) => {

@@ -10,6 +10,7 @@
     "@types/figlet": "^1.7.0",
     "@types/gradient-string": "^1.1.6"
   },
+  "license": "MIT",
   "module": "src/index.ts",
   "name": "changelog",
   "peerDependencies": {
