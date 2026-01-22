@@ -1,0 +1,26 @@
+{
+  "dependencies": {
+    "boxen": "^8.0.1",
+    "figlet": "^1.9.4",
+    "gradient-string": "^3.0.0",
+    "picocolors": "^1.1.1"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/figlet": "^1.7.0",
+    "@types/gradient-string": "^1.1.6"
+  },
+  "module": "src/index.ts",
+  "name": "changelog",
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "private": true,
+  "scripts": {
+    "build": "bun build ./src/index.ts --compile --outfile changelog --minify",
+    "dev": "bun run src/index.ts",
+    "test": "bun test"
+  },
+  "type": "module",
+  "version": "0.1.0"
+}
