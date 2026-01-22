@@ -19,9 +19,10 @@ export function detectPackageManager(binPath: string): PackageManager | null {
     return 'cargo';
   }
 
-  // Python (uv/pip): ~/.local/bin/ or venv paths
+  // Python (uv/pip): ~/.local/bin/, ~/.local/share/uv/, or venv paths
   if (
     binPath.includes('/.local/bin/') ||
+    binPath.includes('/.local/share/uv/') ||
     binPath.includes('/site-packages/') ||
     binPath.includes('/.venv/') ||
     binPath.includes('/venv/')
